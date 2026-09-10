@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Start — Małgosia</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f5f4f0;--surface:#fff;--surface2:#f0eff0;--border:#e2e0db;--border2:#cccac4;--text:#1a1916;--text2:#6b6960;--text3:#a8a69e;--accent:#6d28d9;--r:10px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* SETUP */
+.setup-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+.setup-card{background:var(--surface);border:1px solid #f5d87a;border-radius:var(--r);padding:2rem;max-width:460px;width:100%;background:#fffbea}
+.setup-card h2{font-size:17px;font-weight:600;margin-bottom:.5rem}
+.setup-card p{font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.6}
+.setup-card label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:4px}
+.setup-card input{width:100%;border:1px solid var(--border2);border-radius:var(--r);padding:9px 12px;font-size:13px;margin-bottom:10px;font-family:monospace;background:var(--surface)}
+.setup-card input:focus{outline:none;border-color:var(--accent)}
+.btn-connect{background:#1a1a18;color:#fff;border:none;border-radius:var(--r);padding:10px 22px;font-size:14px;cursor:pointer;width:100%;font-family:inherit}
+.btn-connect:hover{opacity:.85}
+.err-bar{background:#faece7;color:#993c1d;border:1px solid #e8a090;border-radius:var(--r);padding:8px 12px;font-size:13px;margin-top:8px;display:none}
+
+/* LOGIN */
+.login-screen{display:none;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2.5rem;max-width:380px;width:100%;text-align:center}
+.login-icon{font-size:44px;margin-bottom:1rem}
+.login-title{font-size:20px;font-weight:600;margin-bottom:.5rem}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:2rem;line-height:1.6}
+.btn-google{display:inline-flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:11px 20px;font-size:14px;font-family:inherit;cursor:pointer;color:var(--text);width:100%;justify-content:center;transition:background .12s}
+.btn-google:hover{background:var(--surface2)}
+.btn-google svg{width:18px;height:18px;flex-shrink:0}
+.btn-reset{font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;margin-top:1.25rem;text-decoration:underline;font-family:inherit;display:block;width:100%;text-align:center}
+
+/* APP */
+.app{display:none;padding:1.75rem 1.5rem 4rem;max-width:1100px;margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;gap:1rem;flex-wrap:wrap}
+.greeting{font-size:22px;font-weight:600}
+.greeting span{color:var(--accent)}
+.top-right{display:flex;align-items:center;gap:10px}
+.clock{font-size:13px;color:var(--text2)}
+.user-av{width:28px;height:28px;border-radius:50%;border:2px solid var(--border)}
+.btn-logout{font-size:12px;padding:4px 10px;border:1px solid var(--border2);border-radius:20px;background:none;cursor:pointer;color:var(--text2);font-family:inherit}
+.btn-logout:hover{background:var(--surface2)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.25rem}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;display:flex;flex-direction:column;gap:6px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.sec-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)}
+.btn-del-sec{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 2px;line-height:1}
+.btn-del-sec:hover{color:#993c1d}
+
+.link{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;text-decoration:none;color:var(--text);transition:background .12s;position:relative}
+.link:hover{background:var(--surface2)}
+.link-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border)}
+.link-name{font-size:14px;flex:1}
+.link-desc{font-size:11px;color:var(--text3);margin-top:1px}
+.link-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:2px 5px;border-radius:4px;opacity:0;transition:opacity .12s;flex-shrink:0}
+.link:hover .link-del{opacity:1}
+.link-del:hover{color:#993c1d;background:#faece7}
+
+.add-btn{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;border:1px dashed var(--border2);background:none;color:var(--text3);font-size:12px;cursor:pointer;width:100%;font-family:inherit;transition:all .12s;margin-top:4px}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(109,40,217,.04)}
+
+.add-sec-btn{display:flex;align-items:center;gap:8px;padding:12px;border-radius:var(--r);border:1px dashed var(--border2);background:none;color:var(--text3);font-size:13px;cursor:pointer;width:100%;font-family:inherit;transition:all .12s;justify-content:center}
+.add-sec-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(109,40,217,.04)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.1)}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:1.25rem}
+.modal label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);display:block;margin-bottom:4px}
+.modal input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:8px 11px;font-size:14px;color:var(--text);font-family:inherit;margin-bottom:10px}
+.modal input:focus{outline:none;border-color:var(--accent)}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.btn-cancel{padding:7px 16px;border-radius:7px;border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:inherit;font-size:13px}
+.btn-ok{padding:7px 16px;border-radius:7px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-family:inherit;font-size:13px}
+.btn-ok:hover{opacity:.9}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:#fff;padding:9px 18px;border-radius:var(--r);font-size:13px;opacity:0;transition:all .25s;pointer-events:none;z-index:200;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- KROK 1: FIREBASE -->
+<div class="setup-screen" id="screenSetup">
+  <div class="setup-card">
+    <h2>⚙️ Podaj dane Firebase</h2>
+    <p>Wklej dane połączenia — tylko raz na tym urządzeniu.</p>
+    <label>Database URL</label>
+    <input type="text" id="dbUrl" placeholder="https://pomysly-biznesowe-default-rtdb.europe-west1.firebasedatabase.app"/>
+    <label>API Key</label>
+    <input type="text" id="apiKey" placeholder="AIzaSy..."/>
+    <label>Project ID</label>
+    <input type="text" id="projId" placeholder="pomysly-biznesowe"/>
+    <div class="err-bar" id="errBar"></div>
+    <br>
+    <button class="btn-connect" onclick="saveConfig()">Połącz →</button>
+  </div>
+</div>
+
+<!-- KROK 2: LOGOWANIE -->
+<div class="login-screen" id="screenLogin">
+  <div class="login-card">
+    <div class="login-icon">🚀</div>
+    <div class="login-title">Start — Małgosia</div>
+    <div class="login-sub">Twój osobisty dashboard.<br>Zaloguj się żeby zobaczyć swoje linki.</div>
+    <button class="btn-google" onclick="loginGoogle()">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Zaloguj się przez Google
+    </button>
+    <button class="btn-reset" onclick="resetConfig()">Zmień dane Firebase</button>
+  </div>
+</div>
+
+<!-- KROK 3: APLIKACJA -->
+<div class="app" id="screenApp">
+  <div class="top">
+    <div class="greeting">Dzień dobry, <span>Małgosia</span> 👋</div>
+    <div class="top-right">
+      <span class="clock" id="clock"></span>
+      <img class="user-av" id="userAv" src="" style="display:none"/>
+      <button class="btn-logout" onclick="logout()">Wyloguj</button>
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Anuluj</button>
+      <button class="btn-ok" id="modalOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var db=null,auth=null,uid=null;
+var DEFAULT_SECTIONS=[
+  {id:'ai',title:'🤖 AI',links:[
+    {icon:'🟣',name:'Claude',url:'https://claude.ai',desc:'Anthropic'},
+    {icon:'⚙️',name:'Anthropic Console',url:'https://console.anthropic.com',desc:'API, klucze'},
+    {icon:'⚫',name:'ChatGPT',url:'https://chat.openai.com',desc:'OpenAI'},
+    {icon:'🔵',name:'Gemini',url:'https://gemini.google.com',desc:'Google'},
+    {icon:'☁️',name:'Google AI Studio',url:'https://aistudio.google.com',desc:'klucze API do Gemini'},
+    {icon:'📓',name:'NotebookLM',url:'https://notebooklm.google.com',desc:'Google'},
+    {icon:'🔍',name:'Perplexity',url:'https://www.perplexity.ai',desc:'AI search'}
+  ]},
+  {id:'apps',title:'💻 Moje aplikacje',links:[
+    {icon:'💡',name:'Pomysły biznesowe',url:'https://dutys100-lab.github.io/pomysly/pomysly-biznesowe.html',desc:'wspólnie z Grzesiem'},
+    {icon:'📋',name:'Planer',url:'https://dutys100-lab.github.io/planer/',desc:'osobisty planner'},
+    {icon:'🇪🇸',name:'Español en Paraguay',url:'https://dutys100-lab.github.io/espanol-paraguay/',desc:'nauka hiszpańskiego'},
+    {icon:'🎭',name:'Akademia Manipulacji',url:'https://dutys100-lab.github.io/akademia-manipulacji/',desc:'rozpoznawanie manipulacji'},
+    {icon:'🔮',name:'Astrum & Arcana',url:'https://dutys100-lab.github.io/astrum-arcana/',desc:'astrologia, numerologia'},
+    {icon:'🃏',name:'Tarot Losowanie',url:'https://dutys100-lab.github.io/astrum-arcana/tarot-losowanie.html',desc:'losowanie kart'}
+  ]},
+  {id:'auto',title:'⚡ Automatyzacje',links:[
+    {icon:'⚙️',name:'n8n',url:'http://localhost:5678/workflow/A8o0rH2SvuxDNdUX',desc:'workflow lokalny'}
+  ]},
+  {id:'tools',title:'🔧 Narzędzia',links:[
+    {icon:'🔥',name:'Firebase',url:'https://console.firebase.google.com',desc:'bazy danych'},
+    {icon:'🐙',name:'GitHub',url:'https://github.com/dutys100-lab',desc:'dutys100-lab'}
+  ]},
+  {id:'other',title:'🔗 Inne',links:[
+    {icon:'▶️',name:'YouTube',url:'https://www.youtube.com',desc:'wideo'},
+    {icon:'📬',name:'Substack',url:'https://substack.com',desc:'newslettery'},
+    {icon:'👗',name:'Vinted',url:'https://www.vinted.pl',desc:'sprzedaż i zakupy'}
+  ]}
+];
+
+// ── Firebase setup ──────────────────────────────────────────
+var cfg=null;
+try{cfg=JSON.parse(localStorage.getItem('fb-cfg')||'null')}catch(e){}
+if(cfg)initFB(cfg);else show('screenSetup');
+
+function saveConfig(){
+  var url=document.getElementById('dbUrl').value.trim();
+  var key=document.getElementById('apiKey').value.trim();
+  var pid=document.getElementById('projId').value.trim();
+  if(!url||!key||!pid){showErr('Wypełnij wszystkie trzy pola!');return;}
+  var c={databaseURL:url,apiKey:key,projectId:pid,authDomain:pid+'.firebaseapp.com'};
+  localStorage.setItem('fb-cfg',JSON.stringify(c));
+  initFB(c);
+}
+function resetConfig(){localStorage.removeItem('fb-cfg');show('screenSetup');}
+
+function initFB(c){
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(c);
+    db=firebase.database();auth=firebase.auth();
+    auth.onAuthStateChanged(function(user){
+      if(user){
+        uid=user.uid;
+        var av=document.getElementById('userAv');
+        if(user.photoURL){av.src=user.photoURL;av.style.display='block';}
+        show('screenApp');
+        loadData();
+      }else{show('screenLogin');}
+    });
+  }catch(e){showErr('Błąd: '+e.message);show('screenSetup');}
+}
+function loginGoogle(){
+  if(!auth)return;
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(function(e){toast('Błąd: '+e.message);});
+}
+function logout(){if(auth)auth.signOut();}
+
+// ── Data ────────────────────────────────────────────────────
+function ref(){return db.ref('start/'+uid+'/sections');}
+
+function loadData(){
+  ref().once('value',function(snap){
+    var data=snap.val();
+    if(!data){
+      // Pierwsze uruchomienie — wgraj domyślne linki
+      ref().set(DEFAULT_SECTIONS,function(){renderData(DEFAULT_SECTIONS);});
+    }else{
+      renderData(Array.isArray(data)?data:Object.values(data));
+    }
+  });
+  // Nasłuchuj zmian na żywo
+  ref().on('value',function(snap){
+    var data=snap.val();
+    if(data)renderData(Array.isArray(data)?data:Object.values(data));
+  });
+}
+
+function saveData(sections){
+  ref().set(sections,function(err){if(err)toast('Błąd zapisu!');});
+}
+
+var _sections=[];
+
+function renderData(sections){
+  _sections=sections||[];
+  var grid=document.getElementById('grid');
+  grid.innerHTML='';
+  _sections.forEach(function(sec,si){
+    var div=document.createElement('div');
+    div.className='section';
+    div.innerHTML='<div class="sec-head"><div class="sec-title">'+esc(sec.title)+'</div><button class="btn-del-sec" onclick="deleteSection('+si+')" title="Usuń sekcję">×</button></div>';
+    (sec.links||[]).forEach(function(l,li){
+      var a=document.createElement('a');
+      a.className='link';a.href=l.url;a.target='_blank';
+      a.innerHTML='<div class="link-icon">'+esc(l.icon||'🔗')+'</div><div style="flex:1"><div class="link-name">'+esc(l.name)+'</div>'+(l.desc?'<div class="link-desc">'+esc(l.desc)+'</div>':'')+'</div><button class="link-del" onclick="deleteLink(event,'+si+','+li+')" title="Usuń">×</button>';
+      div.appendChild(a);
+    });
+    var addBtn=document.createElement('button');
+    addBtn.className='add-btn';
+    addBtn.textContent='+ dodaj link';
+    addBtn.onclick=function(){openAddLink(si);};
+    div.appendChild(addBtn);
+    grid.appendChild(div);
+  });
+  // Przycisk nowej sekcji
+  var newSec=document.createElement('button');
+  newSec.className='add-sec-btn';
+  newSec.textContent='+ nowa kategoria';
+  newSec.onclick=openAddSection;
+  grid.appendChild(newSec);
+}
+
+// ── Akcje ───────────────────────────────────────────────────
+function deleteLink(e,si,li){
+  e.preventDefault();e.stopPropagation();
+  if(!confirm('Usunąć ten link?'))return;
+  _sections[si].links.splice(li,1);
+  saveData(_sections);
+}
+function deleteSection(si){
+  if(!confirm('Usunąć całą sekcję „'+_sections[si].title+'"?'))return;
+  _sections.splice(si,1);
+  saveData(_sections);
+}
+
+// ── Modals ──────────────────────────────────────────────────
+var _modalOkFn=null;
+function openModal(){document.getElementById('overlay').classList.add('open');}
+function closeModal(e){if(!e||e.target===document.getElementById('overlay'))document.getElementById('overlay').classList.remove('open');}
+document.getElementById('modalOk').addEventListener('click',function(){if(_modalOkFn)_modalOkFn();});
+
+function openAddLink(si){
+  document.getElementById('modalTitle').textContent='Dodaj link do: '+_sections[si].title;
+  document.getElementById('modalBody').innerHTML=
+    '<label>Ikona (emoji)</label><input id="mIcon" value="🔗" maxlength="2"/>'+
+    '<label>Nazwa</label><input id="mName" placeholder="Np. Notion"/>'+
+    '<label>Adres URL</label><input id="mUrl" placeholder="https://..."/>'+
+    '<label>Opis (opcjonalnie)</label><input id="mDesc" placeholder="Krótki opis"/>';
+  _modalOkFn=function(){
+    var name=document.getElementById('mName').value.trim();
+    var url=document.getElementById('mUrl').value.trim();
+    if(!name||!url){alert('Wpisz nazwę i adres!');return;}
+    if(!url.startsWith('http'))url='https://'+url;
+    _sections[si].links=_sections[si].links||[];
+    _sections[si].links.push({icon:document.getElementById('mIcon').value.trim()||'🔗',name:name,url:url,desc:document.getElementById('mDesc').value.trim()});
+    saveData(_sections);
+    closeModal();
+    toast('Link dodany!');
+  };
+  openModal();
+  setTimeout(function(){document.getElementById('mName').focus();},50);
+}
+
+function openAddSection(){
+  document.getElementById('modalTitle').textContent='Nowa kategoria';
+  document.getElementById('modalBody').innerHTML=
+    '<label>Ikona + nazwa</label><input id="mSecTitle" placeholder="🌟 Moja sekcja"/>';
+  _modalOkFn=function(){
+    var title=document.getElementById('mSecTitle').value.trim();
+    if(!title){alert('Wpisz nazwę!');return;}
+    _sections.push({id:'sec'+Date.now(),title:title,links:[]});
+    saveData(_sections);
+    closeModal();
+    toast('Sekcja dodana!');
+  };
+  openModal();
+  setTimeout(function(){document.getElementById('mSecTitle').focus();},50);
+}
+
+// ── Utils ───────────────────────────────────────────────────
+function show(id){
+  ['screenSetup','screenLogin','screenApp'].forEach(function(s){
+    var el=document.getElementById(s);
+    el.style.display=s===id?(s==='screenLogin'?'flex':'block'):'none';
+  });
+}
+function showErr(msg){var el=document.getElementById('errBar');el.textContent=msg;el.style.display='block';}
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2500);}
+
+function tick(){
+  var d=new Date();
+  var dni=['niedziela','poniedziałek','wtorek','środa','czwartek','piątek','sobota'];
+  document.getElementById('clock').textContent=dni[d.getDay()]+', '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+tick();setInterval(tick,10000);
+</script>
+</body>
+</html>
