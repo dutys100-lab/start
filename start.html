@@ -221,13 +221,12 @@ function logout(){if(auth)auth.signOut();}
 function dbRef(){return db.ref('start/'+uid+'/sections');}
 
 function loadData(){
-  dbRef().once('value',function(snap){
-    var data=snap.val();
-    if(!data){dbRef().set(DEFAULT_SECTIONS,function(){});}
-  });
   dbRef().on('value',function(snap){
     var data=snap.val();
-    if(data){
+    if(!data){
+      // Brak danych — wgraj domyślne TYLKO jeśli baza jest pusta
+      dbRef().set(DEFAULT_SECTIONS,function(){});
+    } else {
       _sections=Array.isArray(data)?data:Object.values(data);
       renderAll();
     }
